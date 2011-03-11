@@ -1,0 +1,17 @@
+/**
+ * @tc
+ *@name test applying formatting style.
+ * @tags stable,style,combo
+ * @browsers ie,ff,cr
+ */
+
+// Load the page and retrieve the editor.
+var editor = browser.get( "http://nightly.ckeditor.com/latest/ckeditor/_samples/replacebyclass.html" ).editor( 'editor1' );
+
+// Put cursor in doc, open formatting combo and apply "heading 3" style.
+editor.focus().button( 'Paragraph Format' ).panel().item( 'Heading 3' );
+
+// Verify editor output.
+Assert.areEqual("<h3>\n	This is some <strong>sample text</strong>. You are using <a href=\"http://ckeditor.com/\">CKEditor</a>.</h3>\n",
+    editor.data(), "Editor output doesn't match." );
+
