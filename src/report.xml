@@ -1,0 +1,10 @@
+<project name="testproject" default="testreport" basedir="../">
+	<target name="testreport">
+		<junitreport todir="${reportdir}">
+			<fileset dir="${reportdir}">
+				<include name="*.xml"/>
+			</fileset>
+			<report format="frames" todir="${reportdir}/html"/>
+		</junitreport>
+	</target>
+</project>
