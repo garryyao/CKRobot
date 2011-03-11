@@ -4,7 +4,7 @@ CKRobot is a high-level functional testing automation tool designed specifically
 outside web browsers to verify editor behaviors from an end user's perspective, interacting with the editor UI purely,
 all is driven by a pretty intuitive (JavaScript) test script describing the testing procedures.
 
-Unlike CKTester (CKEditor's unit testing tool), CKRobot doesn't hit the browser sandbox limitation, so tasks like typing
+Unlike "CKTester":http://docs.cksource.com/CKTester/Users_Guide (CKEditor's unit testing tool), CKRobot doesn't hit the browser sandbox limitation, so tasks like typing
 inside the editor iframe was made possible, plus the possibility of covering different browsers on multiple platform, making
 it a very good companion of CKTester in the sense of functional testing.
 
@@ -16,10 +16,12 @@ h2. Quick Start
 # "ckrobot -r tests" to launch the sample test scripts.
 
 h2. Test Script
+
 You can grok the way of authoring test script by checking into the default sample scripts, detailed API document could
  be generated using "_dev/docs".
 
 h2. Script Meta
+
 A test script holds a group of meta data that communicate with the runner of its preferences, those are defined as comment annotations
 at the beginning of the javascript file, the following are currently supported:
 
@@ -28,12 +30,15 @@ at the beginning of the javascript file, the following are currently supported:
 *@browsers A list of browser names that the script dedicate to, this's useful when the test script is supposed to be running only for one or more browers.
 
 h2. Test Framework
+
 The familiarised "YUITest":https://github.com/yui/yuitest is used as both the rest runner and testing framework, which is consistent with CKTester.
 
 h2. Test Report
+
 The test report is available in JUnit test report format which is the most friendly one for other consumers, output by default in "reports" dir, as well as the html version.
 
 h2. Important Notes
+
 # The first thing is to check whether all browsers are installed at the default location, otherwise you need to specify it manually
 by passing the location via JVM argument, e.g. -Dwebdriver.firefox.bin="d:\Program Files\Mozilla Firefox\firefox.exe"
 # Name references in test script are *UI language aware*, this means e.g. the default samples must be running with the default editor language (en) to have them passed.
@@ -42,6 +47,7 @@ by passing the location via JVM argument, e.g. -Dwebdriver.firefox.bin="d:\Progr
 # InternetExplorer 9 is observed to have troubles when working with the robot, you could work around by turning on the compatibility view before running the test.
 
 h2. Supported Browers
+
 * InternetExplorer (ie)
 * Firefox (ff)
 * Google Chrome (cr)
