@@ -25,9 +25,9 @@ h2. Script Meta
 A test script holds a group of meta data that communicate with the runner of its preferences, those are defined as comment annotations
 at the beginning of the javascript file, the following are currently supported:
 
-*@tc Each file much hold this to declare itself a CKRobot test script.
-*@name The title of this piece of test, will be used as the test case name in test runner.
-*@browsers A list of browser names that the script dedicate to, this's useful when the test script is supposed to be running only for one or more browers.
+* @tc Each file much hold this to declare itself a CKRobot test script.
+* @name The title of this piece of test, will be used as the test case name in test runner.
+* @browsers A list of browser names that the script dedicate to, this's useful when the test script is supposed to be running only for one or more browers.
 
 h2. Test Framework
 
