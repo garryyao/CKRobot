@@ -550,3 +550,11 @@ function wave( obj )
 	delete obj.meta;
 	return obj;
 }
+
+// Only used for switching language setting in "ui_languages" sample page.
+function sampleLanguageTo( lang )
+{
+	var languageSelect = driver.findElement( By.id( 'languages' ) );
+	languageSelect.findElement( By.xpath( '//option[@value="' + lang + '"]' ) ).setSelected();
+	wait( 4000 );
+}

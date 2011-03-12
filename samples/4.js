@@ -1,12 +1,15 @@
 /**
- *@tc
- *@name test keyboard navigation on toolbar
+ * @tc
+ * @name test keyboard navigation on toolbar
  * @tags stable,a11y
  * @browsers ie,ff,cr
  */
 
-// Load the page and retrieve the editor.
-var editor = browser.get( "http://nightly.ckeditor.com/latest/ckeditor/_samples/replacebyclass.html" ).editor( 'editor1' );
+// Load the page, switch the demo page language to 'en'.
+browser.get( "http://nightly.ckeditor.com/latest/ckeditor/_samples/ui_languages.html" );
+sampleLanguageTo( 'en' );
+
+var editor = browser.editor( 'editor1' );
 
 // Move focus to toolbar.
 editor.command( 'toolbarFocus' );

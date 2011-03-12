@@ -1,12 +1,15 @@
 /**
  * @tc
- *@name test creating a nested list.
+ * @name test creating a nested list.
  * @tags stable,list
  * @browsers ie,ff,cr
  */
 
-// Load the page and retrieve the editor.
-var editor = browser.get( "http://nightly.ckeditor.com/latest/ckeditor/_samples/replacebyclass.html" ).editor( 'editor1' );
+// Load the page, switch the demo page language to 'en'.
+browser.get( "http://nightly.ckeditor.com/latest/ckeditor/_samples/ui_languages.html" );
+sampleLanguageTo( 'en' );
+
+var editor = browser.editor( 'editor1' );
 
 editor.button( 'New Page' )
 .button( 'Numbered List' )

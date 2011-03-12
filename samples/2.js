@@ -1,12 +1,15 @@
 /**
  * @tc
- *@name test applying formatting style.
+ * @name test applying formatting style.
  * @tags stable,style,combo
  * @browsers ie,ff,cr
  */
 
-// Load the page and retrieve the editor.
-var editor = browser.get( "http://nightly.ckeditor.com/latest/ckeditor/_samples/replacebyclass.html" ).editor( 'editor1' );
+// Load the page, switch the demo page language to 'en'.
+browser.get( "http://nightly.ckeditor.com/latest/ckeditor/_samples/ui_languages.html" );
+sampleLanguageTo( 'en' );
+
+var editor = browser.editor( 'editor1' );
 
 // Put cursor in doc, open formatting combo and apply "heading 3" style.
 editor.focus().button( 'Paragraph Format' ).panel().item( 'Heading 3' );

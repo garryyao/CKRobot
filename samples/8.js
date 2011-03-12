@@ -1,13 +1,15 @@
 /**
- *@tc
- *@name test table editing
+ * @tc
+ * @name test table editing
  * @tags stable,table,menu
  * @browsers ie,ff,cr
  */
 
-// Load the page and retrieve the editor.
-var editor = browser.get( "http://nightly.ckeditor.com/latest/ckeditor/_samples/replacebyclass.html" ).editor( 'editor1' );
+// Load the page, switch the demo page language to 'en'.
+browser.get( "http://nightly.ckeditor.com/latest/ckeditor/_samples/ui_languages.html" );
+sampleLanguageTo( 'en' );
 
+var editor = browser.editor( 'editor1');
 // Empty the doc and insert one default table.
 editor.empty().button( 'Table' ).dialog().button('OK');
 // Fill in cell contents, start from the first cell.

@@ -1,12 +1,15 @@
 /**
- *@tc
- *@name test edit link properties
+ * @tc
+ * @name test edit link properties
  * @tags stable,link,dialog
  * @browsers ie,ff,cr
  */
 
-// Load the page and retrieve the editor.
-var editor = browser.get( "http://nightly.ckeditor.com/latest/ckeditor/_samples/replacebyclass.html" ).editor( 'editor1' );
+// Load the page, switch the demo page language to 'en'.
+browser.get( "http://nightly.ckeditor.com/latest/ckeditor/_samples/ui_languages.html" );
+sampleLanguageTo( 'en' );
+
+var editor = browser.editor( 'editor1' );
 
 // Open link dialog via context menu.
 editor.focus().selection( "//a/text()`2" ).contextmenu();
