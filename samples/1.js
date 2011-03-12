@@ -11,7 +11,6 @@ sampleLanguageTo( 'en' );
 
 var editor = browser.editor( 'editor1' );
 
-editor.button( 'Link');
 // Move focus into editor and clear all content.
 editor.focus( 'editor1' )
 .type( Keys.CONTROL, "a" ).type( Keys.DELETE )
