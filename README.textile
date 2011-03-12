@@ -8,12 +8,21 @@ Unlike "CKTester":http://docs.cksource.com/CKTester/Users_Guide (CKEditor's unit
 inside the editor iframe was made possible, plus the possibility of covering different browsers on multiple platform, making
 it a very good companion of CKTester in the sense of functional testing.
 
+h2. Important Notes
+
+# The first thing is to check whether all browsers are installed at the default location, otherwise you need to specify it manually
+by passing the location via JVM argument, e.g. -Dwebdriver.firefox.bin="d:\Program Files\Mozilla Firefox\firefox.exe"
+# Name references in test script are *UI language aware*, this means e.g. the default samples must be running with the default editor language (en) to have them passed.
+# The reacting speed of different browers might vary from platform and network conditions, so if your test script get stuck because of too fast robot commands sending,
+ try to turn it via "browser.stepSpeed( BIGGER_INTERVAL )", which by default have 2 sec of interval among each step.
+# InternetExplorer 9 is observed to have troubles when working with the robot, you could work around by turning on the compatibility view before running the test.
+
 h2. Quick Start
 
 # git clone this repository
 # cd to the root directory
 # "ckrobot -h" to kick start the CLI.
-# "ckrobot -r tests" to launch the sample test scripts.
+# "ckrobot -r samples" to launch the sample test scripts.
 
 h2. Test Script
 
@@ -36,15 +45,6 @@ The familiarised "YUITest":https://github.com/yui/yuitest is used as both the re
 h2. Test Report
 
 The test report is available in JUnit test report format which is the most friendly one for other consumers, output by default in "reports" dir, as well as the html version.
-
-h2. Important Notes
-
-# The first thing is to check whether all browsers are installed at the default location, otherwise you need to specify it manually
-by passing the location via JVM argument, e.g. -Dwebdriver.firefox.bin="d:\Program Files\Mozilla Firefox\firefox.exe"
-# Name references in test script are *UI language aware*, this means e.g. the default samples must be running with the default editor language (en) to have them passed.
-# The reacting speed of different browers might vary from platform and network conditions, so if your test script get stuck because of too fast robot commands sending,
- try to turn it via "browser.stepSpeed( BIGGER_INTERVAL )", which by default have 2 sec of interval among each step.
-# InternetExplorer 9 is observed to have troubles when working with the robot, you could work around by turning on the compatibility view before running the test.
 
 h2. Supported Browers
 
