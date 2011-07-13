@@ -1,4 +1,4 @@
-var WAIT_SECS = 30, WAIT_SLEEP_MS = 100;
+var WAIT_SECS = vars[ 'wait_timeout'], WAIT_SLEEP_MS = vars[ 'wait_sleep_interval'];
 
 /**
  * The top controller for a browser page, don't instantiate this class,
@@ -302,7 +302,7 @@ function EditorBot( name )
 function DialogBot( editor )
 {
 	// Check dialog shown up.
-	browser.waitFor( function() { return runAtBrowser( function() { return selenium.isVisible( CKEDITOR.dialog._.currentTop.parts.dialog.$ ); } ); });
+	browser.waitFor( function() { return runAtBrowser( function() { return selenium.isVisible( CKEDITOR.dialog._.currentTop.parts.dialog.$ ); } )(); });
 
 	function runAtDialog( fn ) { return runAtBrowser( fn,
 		"var context = \"//div[not(contains(@style,'display: none') or contains(@style,'DISPLAY: none')) and @role='dialog']/table[contains(@class,'cke_dialog')]\";" ); }
@@ -545,19 +545,23 @@ function waitFor( eva, waitSec, interval )
 	var start = new Date(), retval;
 	while( 1 )
 	{
+		var oe;
 		try
 		{
-			if ( retval = eva( driver ) )
+			// Wrapped primitives might be returned.
+			if ( ( retval = eva( driver ) ) != false )
 				return retval;
 		}
 		catch( ex )
 		{
 			if ( ! ( ex.javaException instanceof NotFoundException || ex.javaException instanceof WebDriverException ) )
 				throw ex;
+			else
+				oe = ex;
 		}
 
 		if ( new Date() - start > ( waitSec || WAIT_SECS ) *1000 )
-			throw 'Timeout when waiting for condition:\n' + eva.toSource();
+			throw oe || new TimeoutException('Timeout when waiting for expectation:\t' + eva.toSource() );
 		else
 			Thread.sleep( interval || WAIT_SLEEP_MS );
 	}
