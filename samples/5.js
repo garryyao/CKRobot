@@ -2,11 +2,11 @@
  * @tc
  * @name test typing repeatedly
  * @tags stable,type
- * @browsers ie,ff,cr
+ * @browsers ie,ff
  */
 
 // Load the page, switch the demo page language to 'en'.
-browser.get( "http://nightly.ckeditor.com/latest/ckeditor/_samples/ui_languages.html" );
+browser.get( vars[ 'base' ] + "ui_languages.html" );
 sampleLanguageTo( 'en' );
 
 var editor = browser.editor( 'editor1' );

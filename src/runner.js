@@ -4,7 +4,7 @@ importClass(java.text.SimpleDateFormat);
 importClass( java.io.File );
 importClass( java.io.FileReader );
 importClass( java.io.BufferedReader );
-importClass( java.io.BufferedReader );
+importClass( java.io.InputStreamReader );
 importClass( org.apache.commons.io.FileUtils );
 
 // Apache CLI
@@ -17,7 +17,6 @@ importClass( org.apache.tools.ant.types.FileSet );
 
 // Selenium2 - WebDriver packages.
 importPackage(org.openqa.selenium);
-importPackage(org.openqa.selenium.chrome);
 importPackage(org.openqa.selenium.firefox);
 importPackage(org.openqa.selenium.ie);
 
@@ -25,7 +24,10 @@ load( 'lib/underscore.js' );
 load( 'lib/template.js' );
 load( 'lib/env.js' );
 load( 'lib/yuitest.js' );
-load( 'src/patch.js' );
+
+Envjs.appName = "CKSource/20110713 CKRobot/0.2";
+setTimeout = setInterval = clearInterval = undefined;   // Env.js 1.2 doesn't support timeout, don't confuse YUITest.
+
 
 // Shortcuts for YUITest
 var TestRunner = YUITest.TestRunner,
@@ -36,8 +38,8 @@ var TestRunner = YUITest.TestRunner,
 var args = arguments;
 ( function()
 {
-	var DEFAULT_BROWSERS = [ 'ie','ff','cr' ],
-		BROWSER_DRIVERS = { 'ie': 'InternetExplorerDriver','ff': 'FirefoxDriver', 'cr' : 'ChromeDriver' };
+	var DEFAULT_BROWSERS = [ 'ie','ff' ],
+		BROWSER_DRIVERS = { ie: InternetExplorerDriver,ff: FirefoxDriver };
 
 	// Reused browser sessions among test cases.
 	var driverPool = {};
@@ -83,6 +85,9 @@ var args = arguments;
 	options.addOption( new org.apache.commons.cli.Option( "s","reportstamp", false,
 		  "Whether generate report every once in a new folder named by time stamp" ) );
 
+	options.addOption( new org.apache.commons.cli.Option( "l","loop run", false,
+		  "Whether prompt to re-run all tests once finished (debug only)" ) );
+
 	var parser = new PosixParser();
 
 	try
@@ -99,8 +104,7 @@ var args = arguments;
 			else if ( cmd.hasOption( 't' ) )
 				cTags = _.map( cmd.getOptionValues( 't' ), String );
 
-			if ( cmd.hasOption( 'b') )
-				cBrowsers = _.map( cmd.getOptionValues( 'b' ), String );
+			cBrowsers = cmd.hasOption( 'b') ? _.map( cmd.getOptionValues( 'b' ), String ) : DEFAULT_BROWSERS;
 		}
 		else
 			throw new Error();
@@ -131,14 +135,13 @@ var args = arguments;
 	var srcFiles = fs.getDirectoryScanner( project ).getIncludedFiles();
 
 	// Test scripts registration by scanning the scripts repository.
-	var tests = [],
-			testInfo, testPath,testFile,content;
+	var tests = [], runs = [], testInfo, testPath,testFile,content;
 	for ( var i = 0; i < srcFiles.length; i++ )
 	{
 		testPath = String( srcFiles[ i ] );
 		testFile = new File( rootDir, testPath );
 		content = readFile( testFile );
-		testInfo = { file : testFile, path : testPath, tags: [], name : 'Untitled', browsers : cBrowsers || DEFAULT_BROWSERS };
+		testInfo = { file : testFile, path : testPath, tags: [], name : 'Untitled', browsers : cBrowsers };
 
 		// Bypass any file that wasn't a CKRobot script.
 		if ( !content.match( /@tc\b/ ) )
@@ -165,15 +168,30 @@ var args = arguments;
 		tests.push( testInfo );
 	}
 
+	// Warm up all browsers.
+	for ( i = 0; i < cBrowsers.length; i++ )
+	{
+		var b = cBrowsers[ i ], driverClass = BROWSER_DRIVERS[ b ], p = profile( b );
+		driverPool[ b ] = p ?  new driverClass( p ) : new driverClass();
+	}
+
 	// Criteria evaluation over all registered scripts.
 	for ( i = 0; i < tests.length; i++ )
 	{
 		// Criteria hit.
 		if ( !( cPaths || cTags )
-			|| cPaths && cPaths.indexOf( tests[ i ].path ) != -1
-			|| cTags && _( tests[ i ].tags ).intersect( cTags ).length )
+				|| cPaths && cPaths.indexOf( tests[ i ].path ) != -1
+				|| cTags && _( tests[ i ].tags ).intersect( cTags ).length )
+		{
+			runs.push( tests[ i ] );
 			loadTest( tests[ i ] );
+		}
 	}
+
+	// Load variables.
+	var varFile = new File( rootDir, 'vars.js' );
+	if ( varFile.exists() )
+		load( varFile.getAbsolutePath() );
 
 	// Listen for events to publish to the console logger.
 	TestRunner.attach( TestRunner.BEGIN_EVENT, consoleLog );
@@ -186,7 +204,32 @@ var args = arguments;
 	TestRunner.attach( TestRunner.TEST_FAIL_EVENT, consoleLog );
 	TestRunner.attach( TestRunner.TEST_IGNORE_EVENT, consoleLog );
 
-	try { TestRunner.run(); }
+	try
+	{
+		var repeat = 0;	// Repeat run flag.
+		while ( 1 )
+		{
+			if ( repeat )
+			{
+				if ( !cmd.hasOption( 'l' ) )
+					break;
+				
+				console.log( 'Would you like to re-run all tests [y/n]:' );
+				var input = new BufferedReader( new InputStreamReader( System[ 'in' ] ) )
+				if ( String( input.readLine().trim() ) != 'y' )
+					break;
+
+				TestRunner.clear();
+				_.each(runs, loadTest);
+			}
+			else
+			{
+				repeat = 1;
+			}
+
+			TestRunner.run();
+		}
+	}
 	finally
 	{
 		// Close all browser sessions.
@@ -307,25 +350,26 @@ var args = arguments;
 		{
 			var driverClass = BROWSER_DRIVERS[ browser ];
 			var testScript, browserName;
-			if ( driverClass )
-			{
-				browserName = String( driverClass ).match( /([^.]*?)Driver/ )[ 1 ];
+			browserName = String( driverClass ).match( /([^.]*?)Driver/ )[ 1 ];
 				testScript = readFile( new File( aTest.file ) );
-				testAPIs = testAPIs || readFile( new File( 'src/api.js' ) );
+			testAPIs = testAPIs || readFile( new File( 'src/api.js' ) );
 
-				spec[ 'test'+browserName ] = new Function( [ 'data' ],
-						'var env = "' + browser + '";' +
-						'var driver = this.driverPool[ "' + browser + '" ] || ( this.driverPool[ "' + browser + '" ] = new '+ driverClass+ '() );'
-						+ testAPIs + 'var browser = new BrowserBot( driver );'
-						+ testScript );
-			}
+			spec[ 'test'+browserName ] = new Function( [ 'data' ],
+					'var driver = this.driverPool[ "' + browser + '" ];'
+					+ testAPIs
+					+ 'var browser = new BrowserBot( driver );'
+					// Raise browser window before run.
+					+ 'runAtBrowser( function() { window.focus(); } )();'
+					+ testScript
+					// Lower browser window after run.
+					+ 'runAtBrowser( function() { window.blur(); } )();'
+					);
 		} );
 
 		var tc = new TestCase( spec );
 		tc.driverPool = driverPool;
 		TestRunner.add( tc );
 	}
-
 
 	function readFile( file )
 	{
@@ -340,6 +384,18 @@ var args = arguments;
 	function trim( str )
 	{
 		return String( new java.lang.String( str ).trim() );
+	}
+
+	function profile( browser )
+	{
+		var profile;
+		if ( browser == 'ff' )
+		{
+			profile = new FirefoxProfile();
+			// This option controls whether JavaScript may be used to bring windows into the foreground/background via focus().
+			profile.setPreference( 'dom.disable_window_flip', false );
+		}
+		return profile;
 	}
 
 } )();

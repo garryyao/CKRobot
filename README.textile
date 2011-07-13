@@ -10,13 +10,11 @@ it a very good companion of CKTester in the sense of functional testing.
 
 h2. Important Notes
 
-# The first thing is to check whether all browsers are installed at the default location, otherwise you need to specify it manually
+# Browsers will be located at the default installation location, otherwise you need to specify it manually
 by passing the location via JVM argument, e.g. -Dwebdriver.firefox.bin="d:\Program Files\Mozilla Firefox\firefox.exe"
-# Name references in test script are *UI language aware*, this means e.g. the default samples must be running with the default editor language (en) to have them passed,
+# Name references in test script are *UI language aware*, this means e.g. editor must be running with the default editor language (en) to have them passed,
 you can achieve that by changing browser's "language preferences":http://www.w3.org/International/questions/qa-lang-priorities.
-# The reacting speed of different browers might vary from platform and network conditions, so if your test script get stuck because of too fast robot commands sending,
- try to turn it via "browser.stepSpeed( BIGGER_INTERVAL )", which by default have 2 sec of interval among each step.
-# InternetExplorer 9 is observed to have troubles when working with the robot, you could work around by turning on the compatibility view before running the test.
+# Browser window need to fronted (and focus gained) when the robot is working, otherwise there will be exception thrown regard invisible element.
 
 h2. Quick Start
 
@@ -39,16 +37,27 @@ at the beginning of the javascript file, the following are currently supported:
 * @name The title of this piece of test, will be used as the test case name in test runner.
 * @browsers A list of browser names that the script dedicate to, this's useful when the test script is supposed to be running only for one or more browers.
 
+h2. Environment Variables
+
+Within test script variables could be used to avoid hard-coded strings that requires alternation when environment changes, e.g. base url of  editor sample pages.
+The refereed variables are resolved from the content of a file named *vars.js* inside of the tests repository (-r).
+
 h2. Test Framework
 
-The familiarised "YUITest":https://github.com/yui/yuitest is used as both the rest runner and testing framework, which is consistent with CKTester.
+The familiarised "YUITest":https://github.com/yui/yuitest is used for both the runner and test apis, which is consistent with CKTester.
 
 h2. Test Report
 
 The test report is available in JUnit test report format which is the most friendly one for other consumers, output by default in "reports" dir, as well as the html version.
 
-h2. Supported Browers
+h2. Tested Browers
 
-* InternetExplorer (ie)
-* Firefox (ff)
-* Google Chrome (cr)
+* InternetExplorer 7-9 (ie)
+* Firefox 3.x (ff)
+
+h2. Tested OS
+ * Windows7
+
+h2. Selenium
+
+Selenium/WebDriver version "2.0b1":http://code.google.com/p/selenium/downloads/detail?name=selenium-server-standalone-2.0b1.jar (lib/selenium.jar) is used but not the latest Selenium release.

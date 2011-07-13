@@ -2,17 +2,20 @@
  * @tc
  * @name test keyboard navigation on toolbar
  * @tags stable,a11y
- * @browsers ie,ff,cr
+ * @browsers ie,ff
  */
 
 // Load the page, switch the demo page language to 'en'.
-browser.get( "http://nightly.ckeditor.com/latest/ckeditor/_samples/ui_languages.html" );
+browser.get( vars[ 'base' ] + "ui_languages.html" );
 sampleLanguageTo( 'en' );
 
-var editor = browser.editor( 'editor1' );
+var editor = browser.editor( 'editor1' ).focus();
 
 // Move focus to toolbar.
 editor.command( 'toolbarFocus' );
+
+// Give a while to browser when moving focus.
+wait( 200 );
 
 // Move forward to the second (New Page) button and press space key, note that
 // the keys is send to the browser instead of editor.

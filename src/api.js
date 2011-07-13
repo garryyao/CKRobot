@@ -1,4 +1,4 @@
-var step = 2000;
+var WAIT_SECS = 30, WAIT_SLEEP_MS = 100;
 
 /**
  * The top controller for a browser page, don't instantiate this class,
@@ -12,8 +12,7 @@ function BrowserBot( driver )
 
 		meta :
 		{
-			chainable : [ 'get', 'stepSpeed','typeSpeed','keys' ],
-			pacify : [ 'get' ]
+			chainable : [ 'get','keys' ]
 		},
 
 		/**
@@ -32,23 +31,12 @@ function BrowserBot( driver )
 		},
 
 		/**
-		 * Adjust the interval between actions.
-		 * @param {Number} Milliseconds.
-		 * @returns {BrowserBot}
+		 * Browser environment check through CKEDITOR.env.
+		 * @param query
 		 */
-		stepSpeed : function( msec )
+		env : function( query )
 		{
-			step = msec;
-		},
-
-		/**
-		 * Adjust the keyboard typing speed.
-		 * @param {String} speed One of "fast","medium" or "slow".
-		 * @returns {BrowserBot}
-		 */
-		typeSpeed : function( speed )
-		{
-			driver.manage().setSpeed( Speed[ speed.toUpperCase() ]);
+			return runAtBrowser( function ( browserName ) { return !!CKEDITOR.env[ browserName ]; } )( query );
 		},
 
 		/**
@@ -90,12 +78,14 @@ function EditorBot( name )
 {
 	function runAtEditor( fn ) { return runAtBrowser( fn, 'var editor = CKEDITOR.instances["'+name+'"];\n' ); }
 
+	// Check editor (mode) fully loaded.
+	browser.waitFor( function() { return runAtEditor( function() { return editor.mode; })(); } );
+
 	/** @lends EditorBot.prototype */
 	return wave({
 		meta :
 		{
-			chainable : [ 'selection', 'focus','command','empty','type','button','contextmenu' ],
-			pacify : [ 'focus','empty','button','contextmenu','data' ]
+			chainable : [ 'selection', 'focus','command','empty','type','button','contextmenu' ]
 		},
 
 		/**
@@ -202,8 +192,9 @@ function EditorBot( name )
 		 */
 		button : runAtEditor( function( title )
 		{
-		 var selector = '//*[@id="cke_'+ editor.name + '"]//*[@role="toolbar"]//a[contains(@title,"' + title + '")]';
-		 selenium.doClick( selector );
+			 var selector = '//*[@id="cke_'+ editor.name + '"]//*[@role="toolbar"]//a[contains(@title,"' + title + '")]';
+			 selenium.doClick( selector );
+			 selenium.doMouseUp( selector );
 		} ),
 
 		/**
@@ -248,7 +239,6 @@ function EditorBot( name )
 							return editor.getData();
 					} ).apply( this, arguments );
 
-			data && wait( step );
 			return retval;
 		},
 
@@ -257,13 +247,50 @@ function EditorBot( name )
 		 */
 		compactData : function()
 		{
-			return runAtEditor( function( data )
+			/*
+			* Normalize the CSS style text on "style" attribute for comparison purpose.
+			*/
+			function clean_html( html )
+			{
+				return html.replace(/(style\s*=\s*)(['"])(.*?)(\2)/g, function( match, attr, quoteStart, style, quoteEnd )
+				{
+
+					// 1. Lower case property name.
+					// 2. Add space after colon.
+					// 3. Strip whitespace around semicolon.
+					// 4. Always end with semicolon
+					style = style
+							.replace( /^\s*|\s*$/g, '' )
+							.replace( /(?:^|;)\s*([A-Z-_]+)(:\s*)/ig, function( match, property ) { return property.toLowerCase() + ': '; } )
+							.replace( /\s+(?:;\s*|$)/g, ';' )
+							.replace( /([^;])$/g, '$1;' );
+
+					// Convert a CSS rgb(R, G, B) color back to #RRGGBB format.
+					style = style.replace( /(?:rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\))/gi, function( match, red, green, blue )
+					{
+						red = parseInt( red, 10 ).toString( 16 );
+						green = parseInt( green, 10 ).toString( 16 );
+						blue = parseInt( blue, 10 ).toString( 16 );
+						var color = [red, green, blue];
+
+						// Add padding zeros if the hex value is less than 0x10.
+						for ( var i = 0; i < color.length; i++ )
+							color[i] = String( '0' + color[i] ).slice( -2 );
+
+						return '#' + color.join( '' );
+					} );
+
+					return attr + quoteStart + style + quoteEnd;
+				});
+			}
+
+			return clean_html(runAtEditor( function( data )
 			{
 				var fragment = CKEDITOR.htmlParser.fragment.fromHtml( data ),
 					writer = new CKEDITOR.htmlParser.basicWriter();
 				fragment.writeHtml( writer );
 				return writer.getHtml( true );
-			} )( this.data() );
+			} )( this.data() ) );
 		}
 	});
 }
@@ -274,6 +301,9 @@ function EditorBot( name )
  */
 function DialogBot( editor )
 {
+	// Check dialog shown up.
+	browser.waitFor( function() { return runAtBrowser( function() { return selenium.isVisible( CKEDITOR.dialog._.currentTop.parts.dialog.$ ); } ); });
+
 	function runAtDialog( fn ) { return runAtBrowser( fn,
 		"var context = \"//div[not(contains(@style,'display: none') or contains(@style,'DISPLAY: none')) and @role='dialog']/table[contains(@class,'cke_dialog')]\";" ); }
 
@@ -286,8 +316,7 @@ function DialogBot( editor )
 	return wave({
 		meta :
 		{
-			chainable : [ 'button', 'page' ],
-			pacify : [ 'button', 'page' ]
+			chainable : [ 'button', 'page' ]
 		},
 
 		/**
@@ -344,8 +373,7 @@ function InputBot( input )
 	return wave({
 		meta :
 		{
-			chainable : [ 'type', 'select','clear', 'toggle' ],
-			pacify : [ 'type', 'select', 'clear', 'toggle' ]
+			chainable : [ 'type', 'select','clear', 'toggle' ]
 		},
 
 		/**
@@ -398,6 +426,8 @@ function InputBot( input )
  */
 function PanelBot( editor, parent )
 {
+	browser.waitFor( "//div[not(contains(@style,'display: none') or contains(@style,'DISPLAY: none'))]/div[contains(@class,'cke_panel')]/iframe" + ( parent ? "[not(@id='"+ parent + "')]" : "" ) );
+
 	// Select any visible panel on the page that is not the parent panel if specified,
 	// base on the assumption that there are at most two panels visible per page.
 	function runAtPanel( fn ) { return runAtBrowser( fn,
@@ -408,8 +438,7 @@ function PanelBot( editor, parent )
 	/** @lends PanelBot.prototype */
 	return wave({
 		meta : {
-			chainable : [ 'item', 'close' ],
-			pacify : [ 'item', 'close' ]
+			chainable : [ 'item', 'close' ]
 		},
 
 		/**
@@ -432,6 +461,8 @@ function PanelBot( editor, parent )
 		{
 			var se = Selenium.createForWindow( panel );
 			se.doClick( "//a[contains(@title,'"+ title + "')]" );
+			// Panel item listen to mouseup event in IE (#188).
+			se.doMouseUp( "//a[contains(@title,'"+ title + "')]" );
 		}),
 
 		/**
@@ -482,17 +513,54 @@ function runAtBrowser( fn, head )
 	};
 }
 
+/**
+ * Pause the execution for a while.
+ * @param msecs
+ */
 function wait( msecs )
 {
-	Thread.sleep(msecs);
+	Thread.sleep( msecs );
 }
 
-// Pause for a while after function execution.
-function pace( org )
+/**
+ * Pause the execution until a certain condition is verified by the evaluator through polling.
+ * @param eva {String|Function} an evaluator function or a xpath selector used to check element's availability.
+ * @param waitSec=30 {Number} Expiration time of the evaluation in seconds
+ * @param interval=100 {Number} Interval of the evaluating polling in mill seconds.
+ */
+function waitFor( eva, waitSec, interval )
 {
-	var retval = org.apply( this, _(arguments).slice( 1 ) );
-	wait( step );
-	return retval;
+	if ( typeof eva == 'string' )
+	{
+		var xpath = eva;
+		eva = function( driver )
+		{
+			var el = driver.findElement( By.xpath( xpath ) );
+			if ( !el.isDisplayed() )
+				throw '';
+			return el;
+		};
+	}
+
+	var start = new Date(), retval;
+	while( 1 )
+	{
+		try
+		{
+			if ( retval = eva( driver ) )
+				return retval;
+		}
+		catch( ex )
+		{
+			if ( ! ( ex.javaException instanceof NotFoundException || ex.javaException instanceof WebDriverException ) )
+				throw ex;
+		}
+
+		if ( new Date() - start > ( waitSec || WAIT_SECS ) *1000 )
+			throw 'Timeout when waiting for condition:\n' + eva.toSource();
+		else
+			Thread.sleep( interval || WAIT_SLEEP_MS );
+	}
 }
 
 function chain( org)
@@ -527,13 +595,12 @@ function repeat( keys )
 	return retval;
 }
 
-// Add chain-ability and pace speed into actions
+// Add chain-ability into actions
 // according to the meta defined on the object.
 function wave( obj )
 {
 	var meta = obj.meta,
-		chainable = meta && meta.chainable,
-		pacify = meta && meta.pacify;
+		chainable = meta && meta.chainable;
 
 	_.forEach( obj, function( val, key )
 	{
@@ -542,10 +609,12 @@ function wave( obj )
 
 		if ( chainable && chainable.indexOf( key ) != -1 )
 			obj[ key ] = _.wrap( val, chain );
-		if ( pacify && pacify.indexOf( key ) != -1 )
-			obj[ key ] = _.wrap( obj[ key ], pace );
 
 	});
+
+	// Make "wait" and "waitFor" available to all bots.
+	obj.wait = _.wrap( wait, chain );
+	obj.waitFor = waitFor;
 
 	delete obj.meta;
 	return obj;
@@ -554,7 +623,6 @@ function wave( obj )
 // Only used for switching language setting in "ui_languages" sample page.
 function sampleLanguageTo( lang )
 {
-	var languageSelect = driver.findElement( By.id( 'languages' ) );
+	var languageSelect = browser.waitFor( "//select[@id='languages' and not(@disabled='disabled')]" );
 	languageSelect.findElement( By.xpath( '//option[@value="' + lang + '"]' ) ).setSelected();
-	wait( 4000 );
 }
