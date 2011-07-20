@@ -1,0 +1,5 @@
+/.idea
+*.iml
+.svn
+/reports
+/_dev/
