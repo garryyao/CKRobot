@@ -396,7 +396,7 @@ function InputBot( input )
 			_.forEach( arguments, function( label )
 			{
 				var option = input.findElement( By.xpath("//option[contains(text(),'" + label + "')]") );
-				!option.isSelected() && option.setSelected();
+				!option.isSelected() && option.click();
 			} );
 		},
 
@@ -628,5 +628,5 @@ function wave( obj )
 function sampleLanguageTo( lang )
 {
 	var languageSelect = browser.waitFor( "//select[@id='languages' and not(@disabled='disabled')]" );
-	languageSelect.findElement( By.xpath( '//option[@value="' + lang + '"]' ) ).setSelected();
+	languageSelect.findElement( By.xpath( '//option[@value="' + lang + '"]' ) ).click();
 }

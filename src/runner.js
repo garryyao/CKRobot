@@ -19,6 +19,9 @@ importClass( org.apache.tools.ant.types.FileSet );
 importPackage(org.openqa.selenium);
 importPackage(org.openqa.selenium.firefox);
 importPackage(org.openqa.selenium.ie);
+importPackage(org.openqa.selenium.chrome);
+importPackage(com.opera.core.systems);
+importPackage(com.opera.core.systems.settings);
 
 load( 'lib/underscore.js' );
 load( 'lib/template.js' );
@@ -38,8 +41,8 @@ var TestRunner = YUITest.TestRunner,
 var args = arguments;
 ( function()
 {
-	var DEFAULT_BROWSERS = [ 'ie','ff' ],
-		BROWSER_DRIVERS = { ie: InternetExplorerDriver,ff: FirefoxDriver };
+	var DEFAULT_BROWSERS = [ 'ie','ff', 'cr', 'op' ],
+		BROWSER_DRIVERS = { ie: InternetExplorerDriver,ff: FirefoxDriver,cr: ChromeDriver, op : OperaDriver };
 
 	// Reused browser sessions among test cases.
 	var driverPool = {};
@@ -389,12 +392,20 @@ var args = arguments;
 	function profile( browser )
 	{
 		var profile;
-		if ( browser == 'ff' )
+		switch( browser )
 		{
-			profile = new FirefoxProfile();
-			// This option controls whether JavaScript may be used to bring windows into the foreground/background via focus().
-			profile.setPreference( 'dom.disable_window_flip', false );
+			case 'ff' :
+				profile = new FirefoxProfile();
+				// This option controls whether JavaScript may be used to bring windows into the foreground/background via focus().
+				profile.setPreference( 'dom.disable_window_flip', false );
+				break;
+
+			case 'op' :
+				profile = new OperaDriverSettings();
+//				profile.setNoQuit( true );
+				break;
 		}
+
 		return profile;
 	}
 
