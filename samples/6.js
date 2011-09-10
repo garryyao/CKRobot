@@ -1,8 +1,7 @@
 /**
  * @tc
- * @name test creating a nested list.
+ * @name test creating a nested list
  * @tags stable,list
- * @browsers ie,ff
  */
 
 // Load the page, switch the demo page language to 'en'.

@@ -2,7 +2,6 @@
  * @tc
  * @name test edit link properties
  * @tags stable,link,dialog
- * @browsers ie,ff
  */
 
 // Load the page, switch the demo page language to 'en'.

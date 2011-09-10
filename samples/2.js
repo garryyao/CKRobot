@@ -1,8 +1,7 @@
 /**
  * @tc
- * @name test applying formatting style.
+ * @name test applying formatting style
  * @tags stable,style,combo
- * @browsers ie,ff
  */
 
 // Load the page, switch the demo page language to 'en'.

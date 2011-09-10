@@ -1,8 +1,7 @@
 /**
  * @tc
- * @name test text editing and inline styles application.
+ * @name test text editing and inline styles application
  * @tags stable,type,style,panel
- * @browsers ie,ff
  */
 
 // Load the page, switch the demo page language to 'en'.

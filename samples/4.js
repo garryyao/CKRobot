@@ -2,7 +2,6 @@
  * @tc
  * @name test keyboard navigation on toolbar
  * @tags stable,a11y
- * @browsers ie,ff
  */
 
 // Load the page, switch the demo page language to 'en'.

@@ -2,7 +2,6 @@
  * @tc
  * @name test table editing
  * @tags stable,table,menu
- * @browsers ie,ff
  */
 
 // Load the page, switch the demo page language to 'en'.

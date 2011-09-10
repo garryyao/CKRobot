@@ -2,7 +2,6 @@
  * @tc
  * @name test typing repeatedly
  * @tags stable,type
- * @browsers ie,ff
  */
 
 // Load the page, switch the demo page language to 'en'.
