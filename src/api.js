@@ -66,6 +66,53 @@ function BrowserBot( driver )
 		editor : function( name )
 		{
 			return new EditorBot( name );
+		},
+
+		/**
+		 * Normalize raw HTML for comparison purpose.
+		 * @param html Source HTML data to normalize.
+		 * @param opt Configuration object specifying the normalization detail.
+		 */
+		cleanHtml : function ( html, opt )
+		{
+			!opt && ( opt = {} );
+
+			opt.lowerCase && ( html = html.toLowerCase() );
+
+			html = opt.singleLine !== false ? html.replace( /[\n\r]/g, '' ) : html.replace( /\r/g, '' );
+
+			opt.inlineStyle !== false && ( html = html.replace(/(style\s*=\s*)(['"])(.*?)(\2)/g, function( match, attr, quoteStart, style, quoteEnd )
+			{
+
+				// 1. Lower case property name.
+				// 2. Add space after colon.
+				// 3. Strip whitespace around semicolon.
+				// 4. Always end with semicolon
+				style = style
+						.replace( /^\s*|\s*$/g, '' )
+						.replace( /(?:^|;)\s*([A-Z-_]+)(:\s*)/ig, function( match, property ) { return property.toLowerCase() + ': '; } )
+						.replace( /\s+(?:;\s*|$)/g, ';' )
+						.replace( /([^;])$/g, '$1;' );
+
+				// Convert a CSS rgb(R, G, B) color back to #RRGGBB format.
+				style = style.replace( /(?:rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\))/gi, function( match, red, green, blue )
+				{
+					red = parseInt( red, 10 ).toString( 16 );
+					green = parseInt( green, 10 ).toString( 16 );
+					blue = parseInt( blue, 10 ).toString( 16 );
+					var color = [red, green, blue];
+
+					// Add padding zeros if the hex value is less than 0x10.
+					for ( var i = 0; i < color.length; i++ )
+						color[i] = String( '0' + color[i] ).slice( -2 );
+
+					return '#' + color.join( '' );
+				} );
+
+				return attr + quoteStart + style + quoteEnd;
+			}) );
+
+			return html;
 		}
 	});
 }
@@ -181,8 +228,8 @@ function EditorBot( name )
 		 */
 		type :  function()
 		{
-			var body = runAtEditor( function() { return  editor.document.getBody().$; } )();
-			body.sendKeys.apply( body, repeat( arguments ) );
+				var body = runAtEditor( function() { return  editor.document.getBody().$; } )();
+				body.sendKeys.apply( body, repeat( arguments ) );
 		},
 
 		/**
@@ -247,52 +294,22 @@ function EditorBot( name )
 		 */
 		compactData : function()
 		{
-			/*
-			* Normalize the CSS style text on "style" attribute for comparison purpose.
-			*/
-			function clean_html( html )
-			{
-				return html.replace(/(style\s*=\s*)(['"])(.*?)(\2)/g, function( match, attr, quoteStart, style, quoteEnd )
-				{
-
-					// 1. Lower case property name.
-					// 2. Add space after colon.
-					// 3. Strip whitespace around semicolon.
-					// 4. Always end with semicolon
-					style = style
-							.replace( /^\s*|\s*$/g, '' )
-							.replace( /(?:^|;)\s*([A-Z-_]+)(:\s*)/ig, function( match, property ) { return property.toLowerCase() + ': '; } )
-							.replace( /\s+(?:;\s*|$)/g, ';' )
-							.replace( /([^;])$/g, '$1;' );
-
-					// Convert a CSS rgb(R, G, B) color back to #RRGGBB format.
-					style = style.replace( /(?:rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\))/gi, function( match, red, green, blue )
-					{
-						red = parseInt( red, 10 ).toString( 16 );
-						green = parseInt( green, 10 ).toString( 16 );
-						blue = parseInt( blue, 10 ).toString( 16 );
-						var color = [red, green, blue];
-
-						// Add padding zeros if the hex value is less than 0x10.
-						for ( var i = 0; i < color.length; i++ )
-							color[i] = String( '0' + color[i] ).slice( -2 );
-
-						return '#' + color.join( '' );
-					} );
-
-					return attr + quoteStart + style + quoteEnd;
-				});
-			}
-
-			return clean_html(runAtEditor( function()
+			return browser.cleanHtml( runAtEditor( function()
 			{
 				var data = editor.getData();
 				var fragment = CKEDITOR.htmlParser.fragment.fromHtml( data ),
 					writer = new CKEDITOR.htmlParser.basicWriter();
 				fragment.writeHtml( writer );
 				return writer.getHtml( true );
-			} )() );
-		}
+			} ) )();
+		},
+
+		/**
+		 * Execute the given function inside of the browser with reference to the current editor instance.
+		 * @param func
+		 * @param args
+		 */
+		runAtEditor : function( func, args ) { return runAtEditor( func ).apply( null, args ); }
 	});
 }
 
