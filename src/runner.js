@@ -402,7 +402,7 @@ var args = arguments;
 
 			case 'op' :
 				profile = new OperaDriverSettings();
-//				profile.setNoQuit( true );
+				profile.setNoQuit( true );
 				break;
 		}
 

@@ -27,7 +27,7 @@ function BrowserBot( driver )
 			// Load selenium core after page up.
 			driver.executeScript( readFile( new File( 'lib/selenium-core.js' ) )
 				+ 'self.Selenium = Selenium;'
-				+ 'self.selenium = Selenium.createForWindow( self );');
+				+ 'self.selenium = Selenium.createForWindow( self ); return;');
 		},
 
 		/**
@@ -284,13 +284,14 @@ function EditorBot( name )
 				});
 			}
 
-			return clean_html(runAtEditor( function( data )
+			return clean_html(runAtEditor( function()
 			{
+				var data = editor.getData();
 				var fragment = CKEDITOR.htmlParser.fragment.fromHtml( data ),
 					writer = new CKEDITOR.htmlParser.basicWriter();
 				fragment.writeHtml( writer );
 				return writer.getHtml( true );
-			} )( this.data() ) );
+			} )() );
 		}
 	});
 }
@@ -487,6 +488,9 @@ function runAtBrowser( fn, head )
 
 	head = head || '';
 
+	// Required for Opera.
+	head += '( typeof arguments == "undefined" ) && ( arguments = [] );';
+
 	// Receiving other arguments.
 	source.replace( /function\b.*?\((.*?)\)/,function( match, paramStr )
 	{
@@ -506,7 +510,8 @@ function runAtBrowser( fn, head )
 	{
 		// Make sure execution context is always at the main window.
 		driver.switchTo().defaultContent();
-		var val = driver.executeScript.apply( driver,[ head + content ].concat( _(arguments).toArray() ) );
+		var src = [ head + content ].concat( _(arguments).toArray() );
+		var val = driver.executeScript.apply( driver, src );
 		if ( val instanceof java.lang.String )
 			val = String( val );
 		return val;
