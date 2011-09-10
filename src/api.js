@@ -228,8 +228,22 @@ function EditorBot( name )
 		 */
 		type :  function()
 		{
-				var body = runAtEditor( function() { return  editor.document.getBody().$; } )();
-				body.sendKeys.apply( body, repeat( arguments ) );
+			var target;
+
+			// Opera driver doesn't support driver.switchTo().frame()
+			if ( driver instanceof OperaDriver || driver instanceof InternetExplorerDriver )
+				target = runAtEditor( function() { return  editor.document.getBody().$; } )();
+			else if ( driver instanceof ChromeDriver )
+				target = driver.switchTo().activeElement();
+			else if ( driver instanceof FirefoxDriver )
+			{
+				driver.switchTo().defaultContent();
+				var frame = driver.findElement( By.xpath( '//*[@id="cke_'+ name + '"]//iframe') );
+				driver.switchTo().frame( frame );
+				target = driver.switchTo().activeElement();
+			}
+
+			target.sendKeys.apply( target, repeat( arguments ) );
 		},
 
 		/**
@@ -301,7 +315,7 @@ function EditorBot( name )
 					writer = new CKEDITOR.htmlParser.basicWriter();
 				fragment.writeHtml( writer );
 				return writer.getHtml( true );
-			} ) )();
+			} )() );
 		},
 
 		/**
