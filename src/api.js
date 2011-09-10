@@ -226,25 +226,37 @@ function EditorBot( name )
 		 * @param {String|Number|Key|Chord} keyStroke...  the keystroke to immolate keyboard input.
 		 * @returns {EditorBot}
 		 */
-		type :  function()
+		type :  ( function()
 		{
-			var target;
+			var FFVersion = runAtBrowser( function() { var match = navigator.userAgent.match( /Firefox\/([\d\.]+)/ ); return match && parseFloat( match[ 1 ] ); } )();
 
-			// Opera driver doesn't support driver.switchTo().frame()
-			if ( driver instanceof OperaDriver || driver instanceof InternetExplorerDriver )
-				target = runAtEditor( function() { return  editor.document.getBody().$; } )();
-			else if ( driver instanceof ChromeDriver )
-				target = driver.switchTo().activeElement();
-			else if ( driver instanceof FirefoxDriver )
+			return function()
 			{
-				driver.switchTo().defaultContent();
-				var frame = driver.findElement( By.xpath( '//*[@id="cke_'+ name + '"]//iframe') );
-				driver.switchTo().frame( frame );
-				target = driver.switchTo().activeElement();
-			}
+				var target;
 
-			target.sendKeys.apply( target, repeat( arguments ) );
-		},
+					// Opera driver doesn't support driver.switchTo().frame()
+				if ( driver instanceof OperaDriver || driver instanceof InternetExplorerDriver )
+						target = runAtEditor( function() { return  editor.document.getBody().$; } )();
+				else if ( driver instanceof ChromeDriver )
+						target = driver.switchTo().activeElement();
+				else if ( driver instanceof FirefoxDriver )
+				{
+					driver.switchTo().defaultContent();
+					var frame = driver.findElement( By.xpath( '//*[@id="cke_' + name + '"]//iframe' ) );
+					driver.switchTo().frame( frame );
+					target = driver.switchTo().activeElement();
+				}
+
+				// New keyboard APIs is required for FF4+.
+				if ( FFVersion >= 4 )
+				{
+					var action = org.openqa.selenium.interactions.Actions( driver );
+					action.sendKeys.apply( action, [ target ].concat( repeat( arguments ) ) ).build().perform();
+				}
+				else
+					target.sendKeys.apply( target, repeat( arguments ) );
+			};
+		} )(),
 
 		/**
 		 * Click the specified button from the editor toolbar or any others available ones.
